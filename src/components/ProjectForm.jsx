@@ -30,9 +30,16 @@ export default function ProjectForm() {
     preferredContact: 'Email',
     projectDescription: '',
     inspirationReferences: '',
+    assetsAvailable: [],
+    socialHandles: {
+      selected: false,
+      instagram: '',
+      x: '',
+      linkedin: '',
+    },
     deadline: 'Within 1–2 weeks',
     videoLength: '20–40s',
-    budget: '$300–$600',
+    budget: '$1,000–$2,000',
   })
 
   const [isLoading, setIsLoading] = useState(false)
@@ -44,6 +51,45 @@ export default function ProjectForm() {
     setFormData((prev) => ({
       ...prev,
       [name]: value,
+    }))
+  }
+
+  const handleAssetsChange = (asset) => {
+    setFormData((prev) => ({
+      ...prev,
+      assetsAvailable: prev.assetsAvailable.includes(asset)
+        ? prev.assetsAvailable.filter((a) => a !== asset)
+        : [...prev.assetsAvailable, asset],
+    }))
+  }
+
+  const handleSocialHandleChange = (e) => {
+    const { name, value } = e.target
+    setFormData((prev) => ({
+      ...prev,
+      socialHandles: {
+        ...prev.socialHandles,
+        [name]: value,
+      },
+    }))
+  }
+
+  const handleBudgetChange = (e) => {
+    const { value } = e.target
+    let newVideoLength = formData.videoLength
+    
+    // Apply auto-selection logic for specific budgets
+    if (value === '$100–$300') {
+      newVideoLength = '5–10s'
+    } else if (value === '$300–$600') {
+      newVideoLength = '10–20s'
+    }
+    // For $1,000–$2,000 and other budgets, no auto-selection
+    
+    setFormData((prev) => ({
+      ...prev,
+      budget: value,
+      videoLength: newVideoLength,
     }))
   }
 
@@ -64,6 +110,16 @@ export default function ProjectForm() {
     if (!formData.projectDescription.trim()) {
       setErrorMessage('Project description is required')
       return false
+    }
+    // Validate social handles if selected
+    if (formData.socialHandles.selected) {
+      const hasAtLeastOne = formData.socialHandles.instagram.trim() || 
+                            formData.socialHandles.x.trim() || 
+                            formData.socialHandles.linkedin.trim()
+      if (!hasAtLeastOne) {
+        setErrorMessage('Please provide at least one social handle')
+        return false
+      }
     }
     return true
   }
@@ -93,17 +149,35 @@ export default function ProjectForm() {
         from_name: formData.fullName,
         email: formData.email,
         message: `
+CLIENT INFORMATION
+==================
 Full Name: ${formData.fullName}
 Email: ${formData.email}
 WhatsApp Number: ${formData.whatsappNumber || 'Not provided'}
 Preferred Contact Method: ${formData.preferredContact}
 
+PROJECT DETAILS
+===============
 Project Description:
 ${formData.projectDescription}
 
 Inspiration & References:
 ${formData.inspirationReferences || 'Not provided'}
 
+ASSETS AVAILABLE
+================
+${formData.assetsAvailable.length > 0 ? formData.assetsAvailable.join(', ') : 'None selected'}
+
+SOCIAL HANDLES
+==============
+${formData.socialHandles.selected ? `
+Instagram: ${formData.socialHandles.instagram || 'Not provided'}
+X (Twitter): ${formData.socialHandles.x || 'Not provided'}
+LinkedIn: ${formData.socialHandles.linkedin || 'Not provided'}
+` : 'Not provided'}
+
+PROJECT SPECIFICATIONS
+======================
 Deadline: ${formData.deadline}
 Video Length: ${formData.videoLength}
 Budget: ${formData.budget}
@@ -113,6 +187,8 @@ Budget: ${formData.budget}
         deadline: formData.deadline,
         video_length: formData.videoLength,
         budget: formData.budget,
+        assets_available: formData.assetsAvailable.join(', '),
+        social_handles: formData.socialHandles.selected ? JSON.stringify(formData.socialHandles) : 'Not provided',
         botcheck: '',
       }
 
@@ -136,9 +212,16 @@ Budget: ${formData.budget}
           preferredContact: 'Email',
           projectDescription: '',
           inspirationReferences: '',
+          assetsAvailable: [],
+          socialHandles: {
+            selected: false,
+            instagram: '',
+            x: '',
+            linkedin: '',
+          },
           deadline: 'Within 1–2 weeks',
           videoLength: '20–40s',
-          budget: '$300–$600',
+          budget: '$1,000–$2,000',
         })
       } else {
         setErrorMessage(data.message || 'Something went wrong. Please try again.')
@@ -280,13 +363,83 @@ Budget: ${formData.budget}
           />
         </motion.div>
 
+        {/* Social Handles */}
+        <motion.div variants={itemVariants}>
+          <label className="block text-ink-primary text-sm font-medium mb-3">
+            Social handles <span className="text-ink-muted text-xs">(optional)</span>
+          </label>
+          <div className="mb-3 p-3 bg-bg-secondary rounded-lg border border-[rgba(255,255,255,0.1)]">
+            <button
+              type="button"
+              onClick={() =>
+                setFormData((prev) => ({
+                  ...prev,
+                  socialHandles: {
+                    ...prev.socialHandles,
+                    selected: !prev.socialHandles.selected,
+                  },
+                }))
+              }
+              className={`w-full px-4 py-2 rounded-lg border transition-colors font-medium text-sm text-left flex items-center gap-3 ${
+                formData.socialHandles.selected
+                  ? 'bg-accent-blue border-accent-blue text-white'
+                  : 'border-[rgba(255,255,255,0.1)] text-ink-primary hover:border-[rgba(255,255,255,0.2)]'
+              }`}
+            >
+              <div
+                className={`w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 ${
+                  formData.socialHandles.selected
+                    ? 'border-white bg-accent-blue'
+                    : 'border-[rgba(255,255,255,0.3)]'
+                }`}
+              >
+                {formData.socialHandles.selected && (
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                    <path d="M2 6L5 9L10 3" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                )}
+              </div>
+              I&apos;d like you to reach out on social media
+            </button>
+          </div>
+          {formData.socialHandles.selected && (
+            <div className="space-y-3">
+              <input
+                type="text"
+                name="instagram"
+                value={formData.socialHandles.instagram}
+                onChange={handleSocialHandleChange}
+                placeholder="Instagram username"
+                className="w-full px-4 py-3 bg-bg-secondary border border-[rgba(255,255,255,0.1)] rounded-lg text-ink-primary placeholder-ink-muted focus:outline-none focus:border-accent-blue transition-colors"
+              />
+              <input
+                type="text"
+                name="x"
+                value={formData.socialHandles.x}
+                onChange={handleSocialHandleChange}
+                placeholder="X (Twitter) username"
+                className="w-full px-4 py-3 bg-bg-secondary border border-[rgba(255,255,255,0.1)] rounded-lg text-ink-primary placeholder-ink-muted focus:outline-none focus:border-accent-blue transition-colors"
+              />
+              <input
+                type="text"
+                name="linkedin"
+                value={formData.socialHandles.linkedin}
+                onChange={handleSocialHandleChange}
+                placeholder="LinkedIn username"
+                className="w-full px-4 py-3 bg-bg-secondary border border-[rgba(255,255,255,0.1)] rounded-lg text-ink-primary placeholder-ink-muted focus:outline-none focus:border-accent-blue transition-colors"
+              />
+              <p className="text-ink-muted text-xs">Provide at least one social handle</p>
+            </div>
+          )}
+        </motion.div>
+
         {/* Preferred Contact Method */}
         <motion.div variants={itemVariants}>
           <label className="block text-ink-primary text-sm font-medium mb-3">
             Preferred contact method <span className="text-accent-blue">*</span>
           </label>
           <div className="flex gap-3 flex-wrap">
-            {['Email', 'WhatsApp', 'Instagram DM'].map((method) => (
+            {['Email', 'WhatsApp', 'Social Handles'].map((method) => (
               <button
                 key={method}
                 type="button"
@@ -332,6 +485,44 @@ Budget: ${formData.budget}
             rows="4"
             className="w-full px-4 py-3 bg-bg-secondary border border-[rgba(255,255,255,0.1)] rounded-lg text-ink-primary placeholder-ink-muted focus:outline-none focus:border-accent-blue transition-colors resize-none"
           />
+        </motion.div>
+
+        {/* Assets Available */}
+        <motion.div variants={itemVariants}>
+          <label className="block text-ink-primary text-sm font-medium mb-3">
+            Assets available <span className="text-ink-muted text-xs">(optional)</span>
+          </label>
+          <div className="space-y-2">
+            {['Brand assets', 'Storyboard', 'Script', 'Voice over'].map((asset) => (
+              <button
+                key={asset}
+                type="button"
+                onClick={() => handleAssetsChange(asset)}
+                className={`w-full px-4 py-3 rounded-lg border text-left transition-colors font-medium text-sm ${
+                  formData.assetsAvailable.includes(asset)
+                    ? 'bg-accent-blue border-accent-blue text-white'
+                    : 'border-[rgba(255,255,255,0.1)] text-ink-primary hover:border-[rgba(255,255,255,0.2)]'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 ${
+                      formData.assetsAvailable.includes(asset)
+                        ? 'border-white bg-accent-blue'
+                        : 'border-[rgba(255,255,255,0.3)]'
+                    }`}
+                  >
+                    {formData.assetsAvailable.includes(asset) && (
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                        <path d="M2 6L5 9L10 3" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    )}
+                  </div>
+                  {asset}
+                </div>
+              </button>
+            ))}
+          </div>
         </motion.div>
 
         {/* Inspiration & References */}
@@ -427,11 +618,11 @@ Budget: ${formData.budget}
             <select
               name="budget"
               value={formData.budget}
-              onChange={handleChange}
+              onChange={handleBudgetChange}
               className="w-full px-4 py-3 bg-bg-secondary border border-[rgba(255,255,255,0.1)] rounded-lg text-ink-primary focus:outline-none focus:border-accent-blue transition-colors appearance-none cursor-pointer pr-10"
             >
+              <option>$100–$300</option>
               <option>$300–$600</option>
-              <option>$600–$1,000</option>
               <option>$1,000–$2,000</option>
               <option>$2,000–$5,000</option>
               <option>$5,000+</option>
