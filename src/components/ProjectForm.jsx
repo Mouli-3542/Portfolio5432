@@ -93,6 +93,40 @@ export default function ProjectForm() {
     }))
   }
 
+  // Helper function to determine which video lengths are available based on budget
+  const getAvailableVideoLengths = () => {
+    const allLengths = ['5–10s', '10–20s', '20–40s', '40–60s', '60+s']
+    
+    if (formData.budget === '$100–$300') {
+      // Only 5–10s is available
+      return {
+        '5–10s': true,
+        '10–20s': false,
+        '20–40s': false,
+        '40–60s': false,
+        '60+s': false,
+      }
+    } else if (formData.budget === '$300–$600') {
+      // 10–20s and above are available, 5–10s is disabled
+      return {
+        '5–10s': false,
+        '10–20s': true,
+        '20–40s': true,
+        '40–60s': true,
+        '60+s': true,
+      }
+    } else {
+      // All are available for higher budgets
+      return {
+        '5–10s': true,
+        '10–20s': true,
+        '20–40s': true,
+        '40–60s': true,
+        '60+s': true,
+      }
+    }
+  }
+
   const validateForm = () => {
     if (!formData.fullName.trim()) {
       setErrorMessage('Full name is required')
@@ -587,26 +621,47 @@ Budget: ${formData.budget}
             Video length <span className="text-accent-blue">*</span>
           </label>
           <div className="flex gap-3 flex-wrap">
-            {['5–10s', '10–20s', '20–40s', '40–60s', '60+s'].map((length) => (
-              <button
-                key={length}
-                type="button"
-                onClick={() =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    videoLength: length,
-                  }))
-                }
-                className={`px-4 py-2 rounded-lg border transition-colors font-medium text-sm ${
-                  formData.videoLength === length
-                    ? 'bg-accent-blue border-accent-blue text-white'
-                    : 'border-[rgba(255,255,255,0.1)] text-ink-muted hover:text-ink-primary'
-                }`}
-              >
-                {length}
-              </button>
-            ))}
+            {['5–10s', '10–20s', '20–40s', '40–60s', '60+s'].map((length) => {
+              const availableLengths = getAvailableVideoLengths()
+              const isAvailable = availableLengths[length]
+              const isSelected = formData.videoLength === length
+              
+              return (
+                <button
+                  key={length}
+                  type="button"
+                  onClick={() => {
+                    if (isAvailable) {
+                      setFormData((prev) => ({
+                        ...prev,
+                        videoLength: length,
+                      }))
+                    }
+                  }}
+                  disabled={!isAvailable}
+                  className={`px-4 py-2 rounded-lg border transition-all font-medium text-sm ${
+                    isAvailable
+                      ? isSelected
+                        ? 'bg-accent-blue border-accent-blue text-white cursor-pointer'
+                        : 'border-white/20 text-ink-muted hover:text-ink-primary hover:border-white/40 cursor-pointer'
+                      : 'border-white/10 text-ink-subtle/40 cursor-not-allowed opacity-50'
+                  }`}
+                >
+                  {length}
+                </button>
+              )
+            })}
           </div>
+          {formData.budget === '$100–$300' && (
+            <p className="text-ink-muted text-xs mt-2">
+              Only 5–10s videos are available for this budget.
+            </p>
+          )}
+          {formData.budget === '$300–$600' && (
+            <p className="text-ink-muted text-xs mt-2">
+              Short videos (5–10s) are not available for this budget.
+            </p>
+          )}
         </motion.div>
 
         {/* Budget */}
