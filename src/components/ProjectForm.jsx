@@ -115,8 +115,17 @@ export default function ProjectForm() {
         '40–60s': true,
         '60+s': true,
       }
+    } else if (formData.budget === '$1,000–$2,000') {
+      // All options till 40–60s are available, 60+s is disabled
+      return {
+        '5–10s': true,
+        '10–20s': true,
+        '20–40s': true,
+        '40–60s': true,
+        '60+s': false,
+      }
     } else {
-      // All are available for higher budgets
+      // All are available for higher budgets ($2,000–$5,000 and $5,000+)
       return {
         '5–10s': true,
         '10–20s': true,
@@ -124,6 +133,18 @@ export default function ProjectForm() {
         '40–60s': true,
         '60+s': true,
       }
+    }
+  }
+
+  const getVideoLengthDescription = () => {
+    if (formData.budget === '$100–$300') {
+      return 'Only 5–10s videos are available for this budget.'
+    } else if (formData.budget === '$300–$600') {
+      return 'Videos from 10–20s and longer are available for this budget.'
+    } else if (formData.budget === '$1,000–$2,000') {
+      return 'Videos up to 40–60s are available for this budget.'
+    } else {
+      return 'All video lengths are available for this budget.'
     }
   }
 
@@ -652,16 +673,9 @@ Budget: ${formData.budget}
               )
             })}
           </div>
-          {formData.budget === '$100–$300' && (
-            <p className="text-ink-muted text-xs mt-2">
-              Only 5–10s videos are available for this budget.
-            </p>
-          )}
-          {formData.budget === '$300–$600' && (
-            <p className="text-ink-muted text-xs mt-2">
-              Short videos (5–10s) are not available for this budget.
-            </p>
-          )}
+          <p className="text-ink-muted text-xs mt-2">
+            {getVideoLengthDescription()}
+          </p>
         </motion.div>
 
         {/* Budget */}
